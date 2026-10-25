@@ -84,5 +84,13 @@ mkShell {
     # Prevent the avr-gcc wrapper from picking up host GCC flags
     # like -iframework, which is problematic on Darwin
     unset NIX_CFLAGS_COMPILE_FOR_TARGET
+
+    # Build left/right Ferris Sweep UF2 firmware for Sea-Picro (RP2040 CE).
+    qmk-ferris-left() {
+      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-left "$@"
+    }
+    qmk-ferris-right() {
+      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-right "$@"
+    }
   '';
 }
