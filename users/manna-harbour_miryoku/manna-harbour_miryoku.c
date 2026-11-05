@@ -74,6 +74,8 @@ const uint16_t PROGMEM thumbcombos_sym[] = {KC_UNDS, KC_LPRN, COMBO_END};
 const uint16_t PROGMEM thumbcombos_sym[] = {KC_RPRN, KC_UNDS, COMBO_END};
   #endif
 const uint16_t PROGMEM thumbcombos_fun[] = {KC_SPC, KC_TAB, COMBO_END};
+const uint16_t PROGMEM qwerty_left_media[] = {KC_W, KC_E, KC_R, COMBO_END};
+const uint16_t PROGMEM qwerty_right_fun[] = {KC_U, KC_I, KC_O, COMBO_END};
 combo_t key_combos[COMBO_COUNT] = {
   COMBO(thumbcombos_base_right, LT(U_FUN, KC_DEL)),
   COMBO(thumbcombos_base_left, LT(U_MEDIA, KC_ESC)),
@@ -86,6 +88,8 @@ combo_t key_combos[COMBO_COUNT] = {
   #else
   COMBO(thumbcombos_sym, KC_LPRN),
   #endif
-  COMBO(thumbcombos_fun, KC_APP)
+  COMBO(thumbcombos_fun, KC_APP),
+  COMBO(qwerty_left_media, LT(U_MEDIA, KC_ESC)),
+  COMBO(qwerty_right_fun, LT(U_FUN, KC_DEL))
 };
 #endif
