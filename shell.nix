@@ -85,12 +85,22 @@ mkShell {
     # like -iframework, which is problematic on Darwin
     unset NIX_CFLAGS_COMPILE_FOR_TARGET
 
+    # Build or flash Ferris Sweep firmware. Defaults to QWERTY alphas and VI navigation.
+    qmk-ferris-build() {
+      make ferris/sweep:manna-harbour_miryoku MIRYOKU_ALPHAS=QWERTY MIRYOKU_NAV=VI "$@"
+    }
+    qmk-ferris-flash() {
+      make ferris/sweep:manna-harbour_miryoku:flash MIRYOKU_ALPHAS=QWERTY MIRYOKU_NAV=VI "$@"
+    }
+    alias ferris-sweep=qmk-ferris-build
+    alias ferris-sweep-flash=qmk-ferris-flash
+
     # Build left/right Ferris Sweep UF2 firmware for Sea-Picro (RP2040 CE).
     qmk-ferris-left() {
-      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-left "$@"
+      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-left MIRYOKU_ALPHAS=QWERTY MIRYOKU_NAV=VI "$@"
     }
     qmk-ferris-right() {
-      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-right "$@"
+      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-right MIRYOKU_ALPHAS=QWERTY MIRYOKU_NAV=VI "$@"
     }
   '';
 }
