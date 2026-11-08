@@ -1,8 +1,6 @@
 # Copyright 2019 Manna Harbour
 # https://github.com/manna-harbour/miryoku
 
-SRC += users/manna-harbour_miryoku/timeless_hrm.c
-
 MOUSEKEY_ENABLE = yes
 EXTRAKEY_ENABLE = yes
 AUTO_SHIFT_ENABLE = yes

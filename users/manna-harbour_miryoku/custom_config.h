@@ -5,6 +5,10 @@
 
 #pragma once
 
-// Opt in after updating QMK core for Chordal Hold, Flow Tap and Speculative Hold:
-// #define MIRYOKU_TIMELESS_HRM
+// User layout preferences; retain standard Miryoku tap-hold behavior.
+#define MIRYOKU_ALPHAS_QWERTY
+#define MIRYOKU_TAP_QWERTY
+#define MIRYOKU_NAV_VI
+
+#include "tap_exit.h"
 

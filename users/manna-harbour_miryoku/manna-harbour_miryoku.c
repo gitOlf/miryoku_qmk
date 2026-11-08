@@ -12,6 +12,7 @@
 
 enum {
     U_TD_BOOT,
+    U_TD_TAP_SPACE,
 #define MIRYOKU_X(LAYER, STRING) U_TD_U_##LAYER,
 MIRYOKU_LAYER_LIST
 #undef MIRYOKU_X
@@ -32,7 +33,30 @@ void u_td_fn_U_##LAYER(tap_dance_state_t *state, void *user_data) { \
 MIRYOKU_LAYER_LIST
 #undef MIRYOKU_X
 
+static bool tap_space_held;
+
+void u_td_tap_space_finished(tap_dance_state_t *state, void *user_data) {
+  if (state->count >= 2) {
+    // QMK Miryoku selects typing layers as default layers.
+    default_layer_set((layer_state_t)1 << U_BASE);
+    layer_clear();
+  } else if (state->pressed) {
+    register_code(KC_SPC);
+    tap_space_held = true;
+  } else {
+    tap_code(KC_SPC);
+  }
+}
+
+void u_td_tap_space_reset(tap_dance_state_t *state, void *user_data) {
+  if (tap_space_held) {
+    unregister_code(KC_SPC);
+    tap_space_held = false;
+  }
+}
+
 tap_dance_action_t tap_dance_actions[] = {
+    [U_TD_TAP_SPACE] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, u_td_tap_space_finished, u_td_tap_space_reset),
     [U_TD_BOOT] = ACTION_TAP_DANCE_FN(u_td_fn_boot),
 #define MIRYOKU_X(LAYER, STRING) [U_TD_U_##LAYER] = ACTION_TAP_DANCE_FN(u_td_fn_U_##LAYER),
 MIRYOKU_LAYER_LIST
@@ -74,8 +98,6 @@ const uint16_t PROGMEM thumbcombos_sym[] = {KC_UNDS, KC_LPRN, COMBO_END};
 const uint16_t PROGMEM thumbcombos_sym[] = {KC_RPRN, KC_UNDS, COMBO_END};
   #endif
 const uint16_t PROGMEM thumbcombos_fun[] = {KC_SPC, KC_TAB, COMBO_END};
-const uint16_t PROGMEM qwerty_left_media[] = {KC_W, KC_R, COMBO_END};
-const uint16_t PROGMEM qwerty_right_fun[] = {KC_U, KC_O, COMBO_END};
 combo_t key_combos[COMBO_COUNT] = {
   COMBO(thumbcombos_base_right, LT(U_FUN, KC_DEL)),
   COMBO(thumbcombos_base_left, LT(U_MEDIA, KC_ESC)),
@@ -88,8 +110,6 @@ combo_t key_combos[COMBO_COUNT] = {
   #else
   COMBO(thumbcombos_sym, KC_LPRN),
   #endif
-  COMBO(thumbcombos_fun, KC_APP),
-  COMBO(qwerty_left_media, LT(U_MEDIA, KC_ESC)),
-  COMBO(qwerty_right_fun, LT(U_FUN, KC_DEL))
+  COMBO(thumbcombos_fun, KC_APP)
 };
 #endif
