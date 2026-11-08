@@ -5,3 +5,6 @@
 
 #pragma once
 
+// Opt in after updating QMK core for Chordal Hold, Flow Tap and Speculative Hold:
+// #define MIRYOKU_TIMELESS_HRM
+

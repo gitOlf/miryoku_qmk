@@ -17,6 +17,10 @@
 // Enable rapid switch from tap to hold, disables double tap hold auto-repeat.
 #define QUICK_TAP_TERM 0
 
+// Enable via MIRYOKU_TIMELESS_HRM in custom_config.h; leave legacy defaults
+// untouched otherwise. Applied after TAPPING_TERM's existing override.
+#include "timeless_hrm.h"
+
 // Auto Shift
 #define NO_AUTO_SHIFT_ALPHA
 #define AUTO_SHIFT_TIMEOUT TAPPING_TERM
