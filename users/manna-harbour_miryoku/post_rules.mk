@@ -40,3 +40,9 @@ ifeq ($(strip $(MIRYOKU_KLUDGE_THUMBCOMBOS)),yes)
   COMBO_ENABLE = yes
   OPT_DEFS += -DMIRYOKU_KLUDGE_THUMBCOMBOS
 endif
+
+# alpha-row layer combos
+ifeq ($(strip $(MIRYOKU_KLUDGE_ALPHACOMBOS)),yes)
+  COMBO_ENABLE = yes
+  OPT_DEFS += -DMIRYOKU_KLUDGE_ALPHACOMBOS
+endif

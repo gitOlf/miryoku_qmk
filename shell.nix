@@ -68,7 +68,7 @@ in
 mkShell {
   name = "qmk-firmware";
 
-  buildInputs = [ clang-tools dfu-programmer dfu-util diffutils git pythonEnv niv ]
+  buildInputs = [ clang-tools dfu-programmer dfu-util diffutils git pythonEnv niv util-linux ]
     ++ lib.optional avr [
       pkgsCross.avr.buildPackages.binutils
       pkgsCross.avr.buildPackages.gcc8
@@ -85,36 +85,97 @@ mkShell {
     # like -iframework, which is problematic on Darwin
     unset NIX_CFLAGS_COMPILE_FOR_TARGET
 
+    # This pinned shell ships Git older than zdiff3; configure this checkout
+    # and its initialized submodules to use the broadly supported diff3 style.
+    git config merge.conflictStyle diff3
+    git submodule foreach --recursive 'git config merge.conflictStyle diff3' 2>/dev/null || true
+
     printf '%s\n' \
       '╭─ Miryoku · QMK ─────────────────────────────────────────────╮' \
       '│ Keyboard: Ferris Sweep · standard Miryoku configuration       │' \
       '│ Build:  qmk-ferris-build                                      │' \
       '│ Flash:  qmk-ferris-flash (USB bootloader)                     │' \
-      '│ Sea-Picro: qmk-ferris-build-uf2, then copy each UF2 to its half│' \
+      '│ Piantor: qmk-piantor-build / qmk-piantor-flash                │' \
+      '│ Sea-Picro: qmk-ferris-left-flash / right-flash <volume>       │' \
       '╰──────────────────────────────────────────────────────────────╯' \
-      'Sea-Picro flashing: hold BOOTSEL/reset, connect USB, copy the matching left/right UF2.' \
-      'QWERTY + VI navigation; standard Miryoku home-row mods, no custom alpha-row combos.'
+      'Piantor RP2040: run qmk-piantor-flash for each half; press BOOTSEL when prompted.' \
+      'Sea-Picro: hold BOOTSEL/reset to mount a half, then use its matching flash helper.' \
+      'QWERTY + VI navigation; standard Miryoku home-row mods; alpha-row combos: W+R media/esc, U+O fun/del.'
 
-    # Build or flash Ferris Sweep firmware using standard Miryoku defaults.
+    qmk-ferris-setup() {
+      git config merge.conflictStyle diff3 || return
+      git submodule foreach --recursive 'git config merge.conflictStyle diff3' 2>/dev/null || true
+      git -c merge.conflictStyle=diff3 submodule update --init --recursive
+    }
+
+    # Build or flash the original AVR Ferris Sweep, not Sea-Picro.
     qmk-ferris-build() {
+      qmk-ferris-setup || return
       make ferris/sweep:manna-harbour_miryoku "$@"
     }
     qmk-ferris-flash() {
+      case "''${1:-}" in
+        /*|./*|../*)
+          printf '%s\n' 'For Sea-Picro use qmk-ferris-left-flash <volume> or qmk-ferris-right-flash <volume>.' >&2
+          return 2 ;;
+      esac
+      qmk-ferris-setup || return
       make ferris/sweep:manna-harbour_miryoku:flash "$@"
     }
     alias ferris-sweep=qmk-ferris-build
     alias ferris-sweep-flash=qmk-ferris-flash
 
+    # Piantor uses RP2040 UF2 bootloaders. Run the flash helper once for each
+    # half, entering that half's bootloader when QMK CLI prompts.
+    qmk-piantor-build() {
+      qmk-ferris-setup || return
+      qmk compile -kb beekeeb/piantor -km manna-harbour_miryoku "$@"
+    }
+    qmk-piantor-flash() {
+      qmk-ferris-setup || return
+      qmk flash -kb beekeeb/piantor -km manna-harbour_miryoku "$@"
+    }
+
     # Build left/right Ferris Sweep UF2 firmware for Sea-Picro (RP2040 CE).
+    # uf2-split-left/right are FLASH targets in QMK. Build normally with
+    # the same handedness defines instead, retaining separate output files.
     qmk-ferris-left() {
-      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-left "$@"
+      qmk-ferris-setup || return
+      make CONVERT_TO=rp2040_ce TARGET=ferris_sweep_manna-harbour_miryoku_rp2040_ce_left \
+        EXTRAFLAGS=-DINIT_EE_HANDS_LEFT ferris/sweep:manna-harbour_miryoku "$@"
     }
     qmk-ferris-right() {
-      make CONVERT_TO=rp2040_ce ferris/sweep:manna-harbour_miryoku:uf2-split-right "$@"
+      qmk-ferris-setup || return
+      make CONVERT_TO=rp2040_ce TARGET=ferris_sweep_manna-harbour_miryoku_rp2040_ce_right \
+        EXTRAFLAGS=-DINIT_EE_HANDS_RIGHT ferris/sweep:manna-harbour_miryoku "$@"
     }
     qmk-ferris-build-uf2() {
-      qmk-ferris-left && qmk-ferris-right
-      printf '%s\n' 'Flash UF2 outputs manually: boot each half into BOOTSEL and copy the corresponding left/right UF2.'
+      qmk-ferris-left && qmk-ferris-right || return
+      printf '%s\n' 'Built UF2 firmware. For flashing, boot a half into BOOTSEL and run the matching qmk-ferris-left-flash or qmk-ferris-right-flash helper.'
+    }
+
+    qmk-ferris-flash-uf2() {
+      if [ "$#" -ne 2 ]; then
+        printf '%s\n' 'Usage: qmk-ferris-flash-uf2 <firmware.uf2> <mounted-bootloader-volume>' >&2
+        return 2
+      fi
+      local firmware="$1" mountpoint_path="$2"
+      [ -f "$firmware" ] || { printf 'UF2 file not found: %s\n' "$firmware" >&2; return 1; }
+      case "$firmware" in *.uf2) ;; *) printf '%s\n' 'Expected a .uf2 firmware file' >&2; return 1 ;; esac
+      mountpoint -q "$mountpoint_path" || { printf 'Not a mounted bootloader volume: %s\n' "$mountpoint_path" >&2; return 1; }
+      sudo ${coreutils}/bin/cp "$firmware" "$mountpoint_path/" || return
+      printf 'Copied %s to %s; the bootloader should disconnect when flashing completes.\n' "$(basename "$firmware")" "$mountpoint_path"
+    }
+
+    qmk-ferris-left-flash() {
+      if [ "$#" -ne 1 ]; then printf '%s\n' 'Usage: qmk-ferris-left-flash <mounted-bootloader-volume>' >&2; return 2; fi
+      qmk-ferris-left || return
+      qmk-ferris-flash-uf2 "$PWD/ferris_sweep_manna-harbour_miryoku_rp2040_ce_left.uf2" "$1"
+    }
+    qmk-ferris-right-flash() {
+      if [ "$#" -ne 1 ]; then printf '%s\n' 'Usage: qmk-ferris-right-flash <mounted-bootloader-volume>' >&2; return 2; fi
+      qmk-ferris-right || return
+      qmk-ferris-flash-uf2 "$PWD/ferris_sweep_manna-harbour_miryoku_rp2040_ce_right.uf2" "$1"
     }
   '';
 }

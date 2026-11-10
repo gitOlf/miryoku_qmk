@@ -34,9 +34,17 @@
 #undef MOUSEKEY_TIME_TO_MAX
 #define MOUSEKEY_TIME_TO_MAX    64
 
-// Thumb Combos
-#if defined (MIRYOKU_KLUDGE_THUMBCOMBOS)
+// Combos
+#if defined (MIRYOKU_KLUDGE_THUMBCOMBOS) && defined (MIRYOKU_KLUDGE_ALPHACOMBOS)
+  #define COMBO_COUNT 10
+#elif defined (MIRYOKU_KLUDGE_THUMBCOMBOS)
   #define COMBO_COUNT 8
+#elif defined (MIRYOKU_KLUDGE_ALPHACOMBOS)
+  #define COMBO_COUNT 2
+#endif
+#if defined (MIRYOKU_KLUDGE_THUMBCOMBOS) || defined (MIRYOKU_KLUDGE_ALPHACOMBOS)
   #define COMBO_TERM 200
+#endif
+#if defined (MIRYOKU_KLUDGE_THUMBCOMBOS)
   #define EXTRA_SHORT_COMBOS
 #endif

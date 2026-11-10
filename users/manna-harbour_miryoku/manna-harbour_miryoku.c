@@ -98,7 +98,20 @@ const uint16_t PROGMEM thumbcombos_sym[] = {KC_UNDS, KC_LPRN, COMBO_END};
 const uint16_t PROGMEM thumbcombos_sym[] = {KC_RPRN, KC_UNDS, COMBO_END};
   #endif
 const uint16_t PROGMEM thumbcombos_fun[] = {KC_SPC, KC_TAB, COMBO_END};
+#endif
+
+// alpha-row layer combos: W+R selects Media (tap gives Escape),
+// U+O selects Fun (tap gives Delete). Active wherever the plain letters are
+// mapped (Base, Extra, and Tap layers).
+
+#if defined (MIRYOKU_KLUDGE_ALPHACOMBOS)
+const uint16_t PROGMEM alphacombos_left[] = {KC_W, KC_R, COMBO_END};
+const uint16_t PROGMEM alphacombos_right[] = {KC_U, KC_O, COMBO_END};
+#endif
+
+#if defined (MIRYOKU_KLUDGE_THUMBCOMBOS) || defined (MIRYOKU_KLUDGE_ALPHACOMBOS)
 combo_t key_combos[COMBO_COUNT] = {
+#if defined (MIRYOKU_KLUDGE_THUMBCOMBOS)
   COMBO(thumbcombos_base_right, LT(U_FUN, KC_DEL)),
   COMBO(thumbcombos_base_left, LT(U_MEDIA, KC_ESC)),
   COMBO(thumbcombos_nav, KC_DEL),
@@ -110,6 +123,11 @@ combo_t key_combos[COMBO_COUNT] = {
   #else
   COMBO(thumbcombos_sym, KC_LPRN),
   #endif
-  COMBO(thumbcombos_fun, KC_APP)
+  COMBO(thumbcombos_fun, KC_APP),
+#endif
+#if defined (MIRYOKU_KLUDGE_ALPHACOMBOS)
+  COMBO(alphacombos_left, LT(U_MEDIA, KC_ESC)),
+  COMBO(alphacombos_right, LT(U_FUN, KC_DEL)),
+#endif
 };
 #endif
