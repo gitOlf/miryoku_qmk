@@ -95,10 +95,10 @@ mkShell {
       '│ Keyboard: Ferris Sweep · standard Miryoku configuration       │' \
       '│ Build:  qmk-ferris-build                                      │' \
       '│ Flash:  qmk-ferris-flash (USB bootloader)                     │' \
-      '│ Frood: qmk-frood-flash <keyboard> <keymap> <left|right>       │' \
+      '│ Frood: qmk-frood-left-flash / qmk-frood-right-flash          │' \
       '│ Sea-Picro: qmk-ferris-left-flash / right-flash <volume>       │' \
       '╰──────────────────────────────────────────────────────────────╯' \
-      'Frood is a Pro Micro RP2040 controller; provide keyboard target and keymap.' \
+      'Frood uses Pro Micro RP2040 conversion; flash left and right halves separately.' \
       'Sea-Picro: hold BOOTSEL/reset to mount a half, then use its matching flash helper.' \
       'QWERTY + VI navigation; standard Miryoku home-row mods; alpha-row combos: W+R media/esc, U+O fun/del.'
 
@@ -125,19 +125,17 @@ mkShell {
     alias ferris-sweep=qmk-ferris-build
     alias ferris-sweep-flash=qmk-ferris-flash
 
-    # Flash a keyboard designed for a Pro Micro with Frood RP2040 controllers.
-    # The split UF2 targets set handedness and deploy to the RP2 bootloader.
-    qmk-frood-flash() {
-      if [ "$#" -lt 3 ]; then
-        printf '%s\n' 'Usage: qmk-frood-flash <keyboard> <keymap> <left|right> [qmk flash options...]' >&2
-        return 2
-      fi
-      local keyboard="$1" keymap="$2" side="$3"
-      shift 3
-      case "$side" in left|right) ;; *) printf '%s\n' 'Side must be left or right' >&2; return 2 ;; esac
+    # Flash Ferris Sweep halves fitted with Frood RP2040 controllers. QMK's
+    # split UF2 targets set EEPROM handedness and deploy to the RP2 bootloader.
+    qmk-frood-left-flash() {
       qmk-ferris-setup || return
-      qmk flash -kb "$keyboard" -km "$keymap" \
-        -e CONVERT_TO=promicro_rp2040 -bl "uf2-split-$side" "$@"
+      qmk flash -kb ferris/sweep -km manna-harbour_miryoku \
+        -e CONVERT_TO=promicro_rp2040 -bl uf2-split-left "$@"
+    }
+    qmk-frood-right-flash() {
+      qmk-ferris-setup || return
+      qmk flash -kb ferris/sweep -km manna-harbour_miryoku \
+        -e CONVERT_TO=promicro_rp2040 -bl uf2-split-right "$@"
     }
 
     # Build left/right Ferris Sweep UF2 firmware for Sea-Picro (RP2040 CE).
